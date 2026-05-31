@@ -27,7 +27,6 @@ services:
       - _JAVA_OPTIONS=-Xmx512m
     volumes:
       - ./lavalink/application.yml:/opt/Lavalink/application.yml:ro
-      - lavalink-plugins:/opt/Lavalink/plugins
     ports:
       - "2333:2333"
     healthcheck:
@@ -40,9 +39,6 @@ services:
     image: mongo:7
     container_name: mujahid-mongo
     restart: unless-stopped
-    environment:
-      MONGO_INITDB_ROOT_USERNAME: ${MONGO_USER:-mujahid}
-      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_PASSWORD:-changeme}
     ports:
       - "27017:27017"
     volumes:
@@ -54,5 +50,4 @@ services:
       retries: 6
 
 volumes:
-  lavalink-plugins:
   mongo-data:
