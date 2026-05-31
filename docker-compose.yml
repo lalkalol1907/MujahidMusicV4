@@ -1,0 +1,58 @@
+services:
+  bot:
+    build: .
+    container_name: mujahid-bot
+    restart: unless-stopped
+    depends_on:
+      lavalink:
+        condition: service_healthy
+      mongo:
+        condition: service_healthy
+    environment:
+      - DISCORD_TOKEN=${DISCORD_TOKEN}
+      - DEV_GUILD_ID=${DEV_GUILD_ID:-}
+      - LAVALINK_HOST=lavalink
+      - LAVALINK_PORT=2333
+      - LAVALINK_PASSWORD=${LAVALINK_PASSWORD:-youshallnotpass}
+      - MONGO_URI=mongodb://${MONGO_USER:-mujahid}:${MONGO_PASSWORD:-changeme}@mongo:27017/?authSource=admin
+      - MONGO_DB=${MONGO_DB:-mujahid}
+
+  lavalink:
+    image: ghcr.io/lavalink-devs/lavalink:4.2.2
+    container_name: mujahid-lavalink
+    restart: unless-stopped
+    environment:
+      # Picked up by application.yml via ${LAVALINK_PASSWORD}
+      - LAVALINK_PASSWORD=${LAVALINK_PASSWORD:-youshallnotpass}
+      - _JAVA_OPTIONS=-Xmx512m
+    volumes:
+      - ./lavalink/application.yml:/opt/Lavalink/application.yml:ro
+      - lavalink-plugins:/opt/Lavalink/plugins
+    ports:
+      - "2333:2333"
+    healthcheck:
+      test: ["CMD-SHELL", "nc -z localhost 2333 || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+
+  mongo:
+    image: mongo:7
+    container_name: mujahid-mongo
+    restart: unless-stopped
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_USER:-mujahid}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_PASSWORD:-changeme}
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo-data:/data/db
+    healthcheck:
+      test: ["CMD-SHELL", "mongosh -u \"${MONGO_USER:-mujahid}\" -p \"${MONGO_PASSWORD:-changeme}\" --authenticationDatabase admin --quiet --eval \"db.adminCommand({ping:1})\" || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+
+volumes:
+  lavalink-plugins:
+  mongo-data:

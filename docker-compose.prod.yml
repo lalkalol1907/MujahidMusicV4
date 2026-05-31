@@ -1,0 +1,63 @@
+# Production: pre-built bot image plus Lavalink and MongoDB.
+# Requires IMAGE_NAME and IMAGE_TAG in .env (written by the deploy job).
+# The bot reads its remaining config (DISCORD_TOKEN, LAVALINK_PASSWORD, etc.) from .env.
+services:
+  bot:
+    image: ${IMAGE_NAME}:${IMAGE_TAG}
+    env_file:
+      - .env
+    networks:
+      - mujahid-network
+    environment:
+      LAVALINK_HOST: lavalink
+      LAVALINK_PORT: "2333"
+      MONGO_URI: mongodb://${MONGO_USER:-mujahid}:${MONGO_PASSWORD:-changeme}@mongo:27017/?authSource=admin
+    depends_on:
+      lavalink:
+        condition: service_healthy
+      mongo:
+        condition: service_healthy
+    restart: unless-stopped
+
+  lavalink:
+    image: ghcr.io/lavalink-devs/lavalink:4.2.2
+    env_file:
+      - .env
+    networks:
+      - mujahid-network
+    environment:
+      - LAVALINK_PASSWORD=${LAVALINK_PASSWORD:-youshallnotpass}
+      - _JAVA_OPTIONS=-Xmx512m
+    volumes:
+      - ./lavalink/application.yml:/opt/Lavalink/application.yml:ro
+      - ./lavalink/plugins:/opt/Lavalink/plugins
+    healthcheck:
+      test: ["CMD-SHELL", "nc -z localhost 2333 || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+    restart: unless-stopped
+
+  mongo:
+    image: mongo:7
+    env_file:
+      - .env
+    ports:
+      - "${MONGO_PORT:-27017}:27017"
+    networks:
+      - mujahid-network
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_USER:-mujahid}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_PASSWORD:-changeme}
+    volumes:
+      - ./mongo-data:/data/db
+    healthcheck:
+      test: ["CMD-SHELL", "mongosh -u \"${MONGO_USER:-mujahid}\" -p \"${MONGO_PASSWORD:-changeme}\" --authenticationDatabase admin --quiet --eval \"db.adminCommand({ping:1})\" || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+    restart: unless-stopped
+
+networks:
+  mujahid-network:
+    external: false

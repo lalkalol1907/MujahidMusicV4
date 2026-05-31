@@ -1,0 +1,16 @@
+.git
+.gitignore
+.github
+.idea
+.jdk
+.gradle
+build
+*.log
+.env
+.DS_Store
+data
+mongo-data
+README.md
+docker-compose.yml
+docker-compose.prod.yml
+lavalink
