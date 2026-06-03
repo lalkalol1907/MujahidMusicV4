@@ -1,3 +1,6 @@
+# Production: pre-built bot image plus Lavalink and MongoDB.
+# Requires IMAGE_NAME and IMAGE_TAG in .env (written by the deploy job).
+# The bot reads its remaining config (DISCORD_TOKEN, LAVALINK_PASSWORD, etc.) from .env.
 services:
   bot:
     image: ${IMAGE_NAME}:${IMAGE_TAG}
@@ -11,7 +14,7 @@ services:
       MONGO_URI: mongodb://${MONGO_USER:-mujahid}:${MONGO_PASSWORD:-changeme}@mongo:27017/?authSource=admin
     depends_on:
       lavalink:
-        condition: service_started
+        condition: service_healthy
       mongo:
         condition: service_healthy
     restart: unless-stopped
@@ -26,8 +29,7 @@ services:
       - LAVALINK_PASSWORD=${LAVALINK_PASSWORD:-youshallnotpass}
       - _JAVA_OPTIONS=-Xmx512m
     volumes:
-      - ./lavalink/application.yml:/opt/Lavalink/application.yml:ro
-      - ./lavalink/plugins:/opt/Lavalink/plugins
+      - ./lavalink/application.yml:/opt/Lavalink/application.yml
     restart: unless-stopped
 
   mongo:
