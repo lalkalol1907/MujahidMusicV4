@@ -10,6 +10,7 @@ import com.lalkalol.mujahid.commands.impl.LoopCommand
 import com.lalkalol.mujahid.commands.impl.NowPlayingCommand
 import com.lalkalol.mujahid.commands.impl.PauseCommand
 import com.lalkalol.mujahid.commands.impl.PlayCommand
+import com.lalkalol.mujahid.commands.impl.PlayFileCommand
 import com.lalkalol.mujahid.commands.impl.PlaylistCommand
 import com.lalkalol.mujahid.commands.impl.QueueCommand
 import com.lalkalol.mujahid.commands.impl.RemoveCommand
@@ -46,6 +47,7 @@ fun main() {
     val registry = CommandRegistry(lavalink, playlists)
     registry.register(
         PlayCommand(),
+        PlayFileCommand(),
         JoinCommand(),
         LeaveCommand(),
         PauseCommand(),
