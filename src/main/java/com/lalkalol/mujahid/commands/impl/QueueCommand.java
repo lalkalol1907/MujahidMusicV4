@@ -2,17 +2,12 @@ package com.lalkalol.mujahid.commands.impl;
 
 import com.lalkalol.mujahid.commands.Command;
 import com.lalkalol.mujahid.commands.CommandContext;
-import com.lalkalol.mujahid.util.Embeds;
-import com.lalkalol.mujahid.util.Format;
-import dev.arbjerg.lavalink.client.player.Track;
+import com.lalkalol.mujahid.util.QueuePages;
+import net.dv8tion.jda.api.interactions.commands.OptionType;
 import net.dv8tion.jda.api.interactions.commands.build.Commands;
 import net.dv8tion.jda.api.interactions.commands.build.SlashCommandData;
 
-import java.util.List;
-
 public class QueueCommand implements Command {
-    private static final int QUEUE_PAGE_SIZE = 10;
-
     @Override
     public String name() {
         return "queue";
@@ -20,61 +15,28 @@ public class QueueCommand implements Command {
 
     @Override
     public SlashCommandData data() {
-        return Commands.slash("queue", "Show the current queue.");
+        return Commands.slash("queue", "Show the current queue.")
+                .addOption(OptionType.INTEGER, "page", "Page number", false);
     }
 
     @Override
     public void execute(CommandContext ctx) {
         var scheduler = ctx.getMusicManager().getScheduler();
-        Track current = scheduler.getCurrent();
-        List<Track> queue = scheduler.queueSnapshot();
-
-        if (current == null && queue.isEmpty()) {
+        if (scheduler.getCurrent() == null && scheduler.queueSize() == 0) {
             ctx.replyEphemeral("The queue is empty.");
             return;
         }
 
-        StringBuilder description = new StringBuilder();
-        if (current != null) {
-            description.append("**Now playing:** [")
-                    .append(current.getInfo().getTitle())
-                    .append("](")
-                    .append(current.getInfo().getUri())
-                    .append(") `")
-                    .append(Format.duration(current.getInfo().getLength(), current.getInfo().isStream()))
-                    .append("`\n\n");
-        }
-        if (!queue.isEmpty()) {
-            description.append("**Up next:**\n");
-            int limit = Math.min(queue.size(), QUEUE_PAGE_SIZE);
-            for (int i = 0; i < limit; i++) {
-                Track track = queue.get(i);
-                description.append("`")
-                        .append(i + 1)
-                        .append(".` ")
-                        .append(track.getInfo().getTitle())
-                        .append(" `")
-                        .append(Format.duration(track.getInfo().getLength(), track.getInfo().isStream()))
-                        .append("`\n");
-            }
-            if (queue.size() > QUEUE_PAGE_SIZE) {
-                description.append("\n…and **")
-                        .append(queue.size() - QUEUE_PAGE_SIZE)
-                        .append("** more.");
-            }
+        int page = 1;
+        if (ctx.getEvent().getOption("page") != null) {
+            page = ctx.getEvent().getOption("page").getAsInt();
         }
 
-        var embed = Embeds.music()
-                .setTitle("🎶 Queue")
-                .setDescription(description.toString())
-                .setFooter(
-                        "Loop: " + scheduler.getLoopMode()
-                                + " • Filter: " + scheduler.getFilter().getDisplayName()
-                                + " • Volume: " + scheduler.getVolume() + "% • "
-                                + queue.size() + " in queue"
-                )
-                .build();
-
-        ctx.getEvent().replyEmbeds(embed).queue();
+        var view = QueuePages.build(ctx.getGuild().getIdLong(), scheduler, page);
+        var reply = ctx.getEvent().replyEmbeds(view.embed());
+        if (!view.components().isEmpty()) {
+            reply.setComponents(view.components());
+        }
+        reply.queue();
     }
 }

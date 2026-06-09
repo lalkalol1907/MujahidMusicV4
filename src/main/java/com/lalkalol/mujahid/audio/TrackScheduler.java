@@ -1,6 +1,7 @@
 package com.lalkalol.mujahid.audio;
 
 import com.lalkalol.mujahid.util.Embeds;
+import com.lalkalol.mujahid.util.MusicControls;
 import dev.arbjerg.lavalink.client.player.Track;
 import dev.arbjerg.lavalink.protocol.v4.Message.EmittedEvent.TrackEndEvent.AudioTrackEndReason;
 import net.dv8tion.jda.api.entities.channel.middleman.MessageChannel;
@@ -13,6 +14,7 @@ import java.util.List;
 
 public class TrackScheduler {
     public static final int DEFAULT_VOLUME = 50;
+    public static final int MAX_QUEUE_SIZE = 500;
 
     private static final Logger log = LoggerFactory.getLogger(TrackScheduler.class);
 
@@ -61,15 +63,44 @@ public class TrackScheduler {
         }
     }
 
-    public boolean enqueue(Track track) {
-        if (current == null) {
-            startTrack(track);
-            return true;
-        }
+    public boolean isQueueFull() {
         synchronized (lock) {
-            queue.add(track);
+            return queue.size() >= MAX_QUEUE_SIZE;
         }
-        return false;
+    }
+
+    public AddResult enqueue(Track track) {
+        synchronized (lock) {
+            if (current == null) {
+                startTrackLocked(track, false);
+                return AddResult.STARTED_NOW;
+            }
+            if (queue.size() >= MAX_QUEUE_SIZE) {
+                log.warn("Queue full in guild {} ({} tracks)", gm.getGuildId(), MAX_QUEUE_SIZE);
+                return AddResult.REJECTED_FULL;
+            }
+            queue.add(track);
+            log.debug("Enqueued '{}' in guild {} (position {})",
+                    track.getInfo().getTitle(), gm.getGuildId(), queue.size());
+            return AddResult.QUEUED;
+        }
+    }
+
+    /** Inserts at the front of the queue; starts immediately if nothing is playing. */
+    public AddResult enqueueNext(Track track) {
+        synchronized (lock) {
+            if (current == null) {
+                startTrackLocked(track, false);
+                return AddResult.STARTED_NOW;
+            }
+            if (queue.size() >= MAX_QUEUE_SIZE) {
+                log.warn("Queue full in guild {} ({} tracks)", gm.getGuildId(), MAX_QUEUE_SIZE);
+                return AddResult.REJECTED_FULL;
+            }
+            queue.add(0, track);
+            log.debug("Inserted next '{}' in guild {}", track.getInfo().getTitle(), gm.getGuildId());
+            return AddResult.QUEUED;
+        }
     }
 
     public void enqueueAll(List<Track> tracks) {
@@ -77,10 +108,20 @@ public class TrackScheduler {
             return;
         }
         synchronized (lock) {
-            queue.addAll(tracks);
-        }
-        if (current == null) {
-            playNextOrStop();
+            int space = MAX_QUEUE_SIZE - queue.size();
+            List<Track> toAdd = tracks.size() <= space ? tracks : tracks.subList(0, Math.max(0, space));
+            if (toAdd.isEmpty()) {
+                log.warn("Queue full in guild {}, dropped {} tracks", gm.getGuildId(), tracks.size());
+                return;
+            }
+            if (toAdd.size() < tracks.size()) {
+                log.warn("Truncated bulk enqueue in guild {} to {} tracks (limit {})",
+                        gm.getGuildId(), toAdd.size(), MAX_QUEUE_SIZE);
+            }
+            queue.addAll(toAdd);
+            if (current == null) {
+                playNextOrStopLocked(false);
+            }
         }
     }
 
@@ -110,65 +151,69 @@ public class TrackScheduler {
     }
 
     public Track skip() {
-        Track cur = current;
-        if (loopMode == LoopMode.QUEUE && cur != null) {
-            synchronized (lock) {
+        synchronized (lock) {
+            Track cur = current;
+            if (loopMode == LoopMode.QUEUE && cur != null) {
                 queue.add(cur.makeClone());
             }
+            return playNextOrStopLocked(true);
         }
-        return playNextOrStop();
     }
 
     public void stop() {
-        clearQueue();
-        current = null;
+        synchronized (lock) {
+            queue.clear();
+            current = null;
+        }
         gm.getLink().createOrUpdatePlayer()
                 .setPaused(false)
                 .setTrack(null)
                 .subscribe();
+        log.info("Stopped playback in guild {}", gm.getGuildId());
     }
 
     public void onTrackStart(Track track) {
-        current = track;
-        announceNowPlaying(track);
+        synchronized (lock) {
+            current = track;
+        }
     }
 
     public void onTrackEnd(Track lastTrack, AudioTrackEndReason endReason) {
         if (!endReason.getMayStartNext()) {
+            log.debug("Track end in guild {} will not advance (reason {})", gm.getGuildId(), endReason);
             return;
         }
 
-        switch (loopMode) {
-            case TRACK -> startTrack(lastTrack.makeClone());
-            case QUEUE -> {
-                synchronized (lock) {
+        synchronized (lock) {
+            switch (loopMode) {
+                case TRACK -> startTrackLocked(lastTrack.makeClone(), true);
+                case QUEUE -> {
                     queue.add(lastTrack.makeClone());
+                    playNextOrStopLocked(true);
                 }
-                playNextOrStop();
+                case OFF -> playNextOrStopLocked(true);
             }
-            case OFF -> playNextOrStop();
         }
     }
 
-    private Track playNextOrStop() {
-        Track next;
-        synchronized (lock) {
-            next = queue.isEmpty() ? null : queue.remove(0);
-        }
+    private Track playNextOrStopLocked(boolean announce) {
+        Track next = queue.isEmpty() ? null : queue.remove(0);
         if (next != null) {
-            startTrack(next);
+            startTrackLocked(next, announce);
         } else {
             current = null;
             var link = gm.getCachedLink();
             if (link != null) {
                 link.createOrUpdatePlayer().setTrack(null).subscribe();
             }
+            log.debug("Queue drained in guild {}", gm.getGuildId());
         }
         return next;
     }
 
-    private void startTrack(Track track) {
+    private void startTrackLocked(Track track, boolean announce) {
         current = track;
+        log.info("Starting '{}' in guild {}", track.getInfo().getTitle(), gm.getGuildId());
         gm.getLink().createOrUpdatePlayer()
                 .setTrack(track)
                 .setVolume(volume)
@@ -178,6 +223,9 @@ public class TrackScheduler {
                         },
                         error -> log.error("Failed to start track in guild {}", gm.getGuildId(), error)
                 );
+        if (announce) {
+            announceNowPlaying(track);
+        }
     }
 
     public void applyVolume(int newVolume) {
@@ -207,8 +255,10 @@ public class TrackScheduler {
                 .setTitle(info.getTitle().isBlank() ? "Unknown" : info.getTitle(), info.getUri())
                 .setDescription("by " + info.getAuthor())
                 .build();
-        channel.sendMessageEmbeds(embed).queue(null, failure -> {
-        });
+        boolean paused = gm.getPlayer() != null && gm.getPlayer().getPaused();
+        channel.sendMessageEmbeds(embed)
+                .setComponents(MusicControls.playbackRow(gm.getGuildId(), paused))
+                .queue(null, failure -> log.warn("Failed to announce track in guild {}", gm.getGuildId(), failure));
     }
 
     private MessageChannel resolveChannel(Track track) {
@@ -222,7 +272,8 @@ public class TrackScheduler {
                 return null;
             }
             return jda.getTextChannelById(data.textChannelId());
-        } catch (Exception ignored) {
+        } catch (Exception e) {
+            log.debug("Could not resolve announce channel in guild {}", gm.getGuildId(), e);
             return null;
         }
     }

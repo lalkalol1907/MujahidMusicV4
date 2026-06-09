@@ -9,7 +9,7 @@
         <appender-ref ref="STDOUT" />
     </root>
 
-    <logger name="com.lalkalol" level="DEBUG" />
+    <logger name="com.lalkalol" level="INFO" />
     <logger name="dev.arbjerg.lavalink" level="INFO" />
     <logger name="net.dv8tion" level="INFO" />
 </configuration>

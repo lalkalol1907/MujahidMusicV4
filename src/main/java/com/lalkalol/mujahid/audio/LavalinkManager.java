@@ -60,6 +60,12 @@ public class LavalinkManager {
 
     public void destroy(long guildId) {
         musicManagers.remove(guildId);
+        log.debug("Destroyed music manager for guild {}", guildId);
+    }
+
+    public void shutdown() {
+        log.info("Shutting down Lavalink client");
+        client.close();
     }
 
     private void addNode() {

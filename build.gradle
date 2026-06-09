@@ -1,0 +1,46 @@
+plugins {
+    id 'java'
+    id 'application'
+    alias(libs.plugins.shadow)
+}
+
+group = 'com.lalkalol'
+version = '4.0.0'
+
+repositories {
+    mavenCentral()
+    maven { url 'https://maven.lavalink.dev/releases' }
+    maven { url 'https://maven.lavalink.dev/snapshots' }
+}
+
+dependencies {
+    implementation libs.jda
+    implementation libs.lavalink.client
+    implementation libs.mongodb.driver.sync
+    implementation libs.dotenv.java
+    implementation libs.logback.classic
+
+    testImplementation libs.junit.jupiter
+    testImplementation libs.mockito.junit.jupiter
+}
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(24)
+    }
+}
+
+application {
+    mainClass = 'com.lalkalol.mujahid.Main'
+}
+
+tasks.named('test') {
+    useJUnitPlatform()
+}
+
+tasks.named('shadowJar') {
+    archiveBaseName = 'MujahidMusicV4'
+    archiveClassifier = ''
+    archiveVersion = ''
+    mergeServiceFiles()
+}

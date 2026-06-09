@@ -3,7 +3,7 @@ WORKDIR /app
 
 COPY gradlew gradlew
 COPY gradle gradle
-COPY settings.gradle.kts build.gradle.kts gradle.properties ./
+COPY settings.gradle build.gradle gradle.properties ./
 RUN chmod +x gradlew && ./gradlew --no-daemon dependencies > /dev/null 2>&1 || true
 
 COPY src src
