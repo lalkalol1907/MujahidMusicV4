@@ -1,19 +1,21 @@
 [versions]
-kotlin = "2.2.21"
 jda = "6.4.1"
 lavalinkClient = "3.4.0"
 mongodb = "5.8.0"
 logback = "1.5.12"
-dotenv = "6.5.1"
+dotenv = "3.2.0"
 shadow = "8.3.5"
+junit = "5.11.4"
+mockito = "5.14.2"
 
 [libraries]
 jda = { module = "net.dv8tion:JDA", version.ref = "jda" }
 lavalink-client = { module = "dev.arbjerg:lavalink-client", version.ref = "lavalinkClient" }
-mongodb-driver-kotlin-sync = { module = "org.mongodb:mongodb-driver-kotlin-sync", version.ref = "mongodb" }
+mongodb-driver-sync = { module = "org.mongodb:mongodb-driver-sync", version.ref = "mongodb" }
 logback-classic = { module = "ch.qos.logback:logback-classic", version.ref = "logback" }
-dotenv-kotlin = { module = "io.github.cdimascio:dotenv-kotlin", version.ref = "dotenv" }
+dotenv-java = { module = "io.github.cdimascio:dotenv-java", version.ref = "dotenv" }
+junit-jupiter = { module = "org.junit.jupiter:junit-jupiter", version.ref = "junit" }
+mockito-junit-jupiter = { module = "org.mockito:mockito-junit-jupiter", version.ref = "mockito" }
 
 [plugins]
-kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
 shadow = { id = "com.gradleup.shadow", version.ref = "shadow" }

@@ -1,5 +1,5 @@
 plugins {
-    alias(libs.plugins.kotlin.jvm)
+    java
     alias(libs.plugins.shadow)
     application
 }
@@ -17,18 +17,27 @@ dependencies {
     implementation(libs.jda)
     implementation(libs.lavalink.client)
 
-    implementation(libs.mongodb.driver.kotlin.sync)
+    implementation(libs.mongodb.driver.sync)
 
-    implementation(libs.dotenv.kotlin)
+    implementation(libs.dotenv.java)
     implementation(libs.logback.classic)
+
+    testImplementation(libs.junit.jupiter)
+    testImplementation(libs.mockito.junit.jupiter)
 }
 
-kotlin {
-    jvmToolchain(24)
+java {
+    toolchain {
+        languageVersion.set(JavaLanguageVersion.of(24))
+    }
 }
 
 application {
-    mainClass.set("com.lalkalol.mujahid.MainKt")
+    mainClass.set("com.lalkalol.mujahid.Main")
+}
+
+tasks.test {
+    useJUnitPlatform()
 }
 
 tasks.shadowJar {

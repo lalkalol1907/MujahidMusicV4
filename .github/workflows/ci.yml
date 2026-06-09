@@ -1,8 +1,8 @@
 name: CI
 
-# push / pull_request — lint + test на любых ветках и PR.
+# push / pull_request — test на любых ветках и PR.
 # build + deploy — только при push тега v* (refs/tags/v1.0.0 и т.д.).
-# workflow_dispatch — ручной запуск lint + test (без сборки и деплоя).
+# workflow_dispatch — ручной запуск test (без сборки и деплоя).
 on:
   workflow_dispatch:
   push:
@@ -16,23 +16,7 @@ permissions:
   contents: read
 
 jobs:
-  lint:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Set up JDK 24
-        uses: actions/setup-java@v4
-        with:
-          java-version: '24'
-          distribution: temurin
-          cache: gradle
-
-      - name: Compile
-        run: ./gradlew compileKotlin compileTestKotlin --no-daemon
-
   test:
-    needs: lint
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
