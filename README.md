@@ -142,6 +142,7 @@ GitHub Actions (`.github/workflows/ci.yml`):
 | **Test** | push, PR | `./gradlew test`, `pytest admin-api/tests` |
 | **Build** | tag `v*` | Build & push 3 images to Docker Hub |
 | **Deploy** | tag `v*` | SSH → write `.env` → `compose pull` → `up -d` |
+| **Release** | tag `v*` | GitHub Release with auto-generated notes + Docker image list |
 
 Docker Hub image names (repo = `MujahidMusicV4`, user = `johndoe`):
 
@@ -169,7 +170,7 @@ ADMIN_CORS_ORIGIN=http://your-server:3000
 
 **Server needs only:** `docker-compose.prod.yml`, `lavalink/application.yml`, `.env`. No source checkout required for admin services.
 
-Release:
+Release (build, deploy, and [GitHub Release](https://docs.github.com/en/repositories/releasing-projects-on-github/managing-releases-in-a-repository) are created automatically):
 
 ```bash
 git tag v1.0.0

@@ -143,3 +143,30 @@ jobs:
             echo "$DOCKERHUB_TOKEN" | docker login --username "$DOCKERHUB_USERNAME" --password-stdin
             docker compose -f docker-compose.prod.yml pull
             docker compose -f docker-compose.prod.yml up -d
+
+  # GitHub Release после успешной сборки образов (тег v* уже запушен вручную).
+  release:
+    name: Release
+    needs: build
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          generate_release_notes: true
+          body: |
+            ## Docker images
+
+            Tag `${{ github.ref_name }}` is published to Docker Hub:
+
+            - `${{ secrets.DOCKERHUB_USERNAME }}/${{ github.event.repository.name }}:${{ github.ref_name }}`
+            - `${{ secrets.DOCKERHUB_USERNAME }}/${{ github.event.repository.name }}-admin-api:${{ github.ref_name }}`
+            - `${{ secrets.DOCKERHUB_USERNAME }}/${{ github.event.repository.name }}-admin-web:${{ github.ref_name }}`
