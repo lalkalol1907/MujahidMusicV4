@@ -12,6 +12,9 @@ services:
       LAVALINK_HOST: lavalink
       LAVALINK_PORT: "2333"
       MONGO_URI: mongodb://${MONGO_USER:-mujahid}:${MONGO_PASSWORD:-changeme}@mongo:27017/?authSource=admin
+      METRICS_PORT: "9090"
+    expose:
+      - "9090"
     depends_on:
       lavalink:
         condition: service_healthy
@@ -30,6 +33,11 @@ services:
       - _JAVA_OPTIONS=-Xmx512m
     volumes:
       - ./lavalink/application.yml:/opt/Lavalink/application.yml
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf -H 'Authorization: ${LAVALINK_PASSWORD:-youshallnotpass}' http://localhost:2333/version || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
     restart: unless-stopped
 
   mongo:

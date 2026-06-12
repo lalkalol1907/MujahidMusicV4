@@ -2,6 +2,7 @@ package com.lalkalol.mujahid.listeners;
 
 import com.lalkalol.mujahid.audio.LavalinkManager;
 import com.lalkalol.mujahid.commands.CommandRegistry;
+import com.lalkalol.mujahid.metrics.MetricsHolder;
 import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.channel.middleman.AudioChannel;
 import net.dv8tion.jda.api.events.guild.voice.GuildVoiceUpdateEvent;
@@ -89,6 +90,8 @@ public class InteractionListener extends ListenerAdapter {
             }
             guild.getJDA().getDirectAudioController().disconnect(guild);
             lavalink.destroy(guild.getIdLong());
+            MetricsHolder.get().recordVoiceSession("auto_leave");
+            MetricsHolder.get().setActivePlayers(lavalink.activePlayerCount());
         }
     }
 }

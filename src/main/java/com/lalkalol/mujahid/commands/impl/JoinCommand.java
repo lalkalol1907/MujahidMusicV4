@@ -2,6 +2,7 @@ package com.lalkalol.mujahid.commands.impl;
 
 import com.lalkalol.mujahid.commands.Command;
 import com.lalkalol.mujahid.commands.CommandContext;
+import com.lalkalol.mujahid.metrics.MetricsHolder;
 import net.dv8tion.jda.api.entities.channel.middleman.AudioChannel;
 import net.dv8tion.jda.api.interactions.commands.build.Commands;
 import net.dv8tion.jda.api.interactions.commands.build.SlashCommandData;
@@ -26,6 +27,8 @@ public class JoinCommand implements Command {
         }
         ctx.getEvent().getJDA().getDirectAudioController().connect(channel);
         ctx.getLavalink().getOrCreate(ctx.getGuild().getIdLong());
+        MetricsHolder.get().recordVoiceSession("join");
+        MetricsHolder.get().setActivePlayers(ctx.getLavalink().activePlayerCount());
         ctx.reply("Joined **" + channel.getName() + "**.");
     }
 }

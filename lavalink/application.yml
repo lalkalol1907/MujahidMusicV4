@@ -59,7 +59,8 @@ plugins:
 
 metrics:
   prometheus:
-    enabled: false
+    enabled: true
+    endpoint: /metrics
 
 logging:
   level:

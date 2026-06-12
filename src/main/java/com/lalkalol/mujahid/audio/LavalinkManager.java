@@ -13,6 +13,8 @@ import net.dv8tion.jda.api.JDA;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 import dev.arbjerg.lavalink.client.Helpers;
@@ -61,6 +63,16 @@ public class LavalinkManager {
     public void destroy(long guildId) {
         musicManagers.remove(guildId);
         log.debug("Destroyed music manager for guild {}", guildId);
+    }
+
+    /** Returns all active guild music managers as an unmodifiable snapshot. */
+    public List<Map.Entry<Long, GuildMusicManager>> getAllManagers() {
+        return List.copyOf(musicManagers.entrySet());
+    }
+
+    /** Returns the number of active guild managers (for the active_players gauge). */
+    public int activePlayerCount() {
+        return musicManagers.size();
     }
 
     public void shutdown() {

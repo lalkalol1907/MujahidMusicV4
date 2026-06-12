@@ -19,6 +19,8 @@ dependencies {
     implementation libs.mongodb.driver.sync
     implementation libs.dotenv.java
     implementation libs.logback.classic
+    implementation libs.micrometer.core
+    implementation libs.micrometer.registry.prometheus
 
     testImplementation libs.junit.jupiter
     testImplementation libs.mockito.junit.jupiter

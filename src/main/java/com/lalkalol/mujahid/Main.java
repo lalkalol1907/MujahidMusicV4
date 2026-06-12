@@ -7,6 +7,9 @@ import com.lalkalol.mujahid.db.MongoStorage;
 import com.lalkalol.mujahid.db.PlaylistRepository;
 import com.lalkalol.mujahid.health.HealthMonitor;
 import com.lalkalol.mujahid.listeners.InteractionListener;
+import com.lalkalol.mujahid.metrics.BotMetrics;
+import com.lalkalol.mujahid.metrics.MetricsHolder;
+import com.lalkalol.mujahid.metrics.MetricsHttpServer;
 import dev.arbjerg.lavalink.libraries.jda.JDAVoiceUpdateListener;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.JDABuilder;
@@ -16,6 +19,7 @@ import net.dv8tion.jda.api.utils.cache.CacheFlag;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 import java.nio.file.Path;
 import java.util.concurrent.TimeUnit;
 
@@ -25,9 +29,13 @@ public final class Main {
     private Main() {
     }
 
-    public static void main(String[] args) throws InterruptedException {
+    public static void main(String[] args) throws InterruptedException, IOException {
         Config config = Config.load();
         Config.applyLogLevel(config.logLevel());
+
+        // Metrics — initialise before any other components so counters work from startup
+        BotMetrics metrics = new BotMetrics();
+        MetricsHolder.set(metrics);
 
         MongoStorage mongo = new MongoStorage(config.mongoUri(), config.mongoDatabase());
         PlaylistRepository playlists = new PlaylistRepository(mongo.getDatabase());
@@ -35,7 +43,7 @@ public final class Main {
         LavalinkManager lavalink = new LavalinkManager(config);
         lavalink.start();
 
-        CommandRegistry registry = new CommandRegistry(lavalink, playlists);
+        CommandRegistry registry = new CommandRegistry(lavalink, playlists, metrics);
         registry.registerDefaults();
 
         JDA jda = JDABuilder.createDefault(config.discordToken())
@@ -51,14 +59,25 @@ public final class Main {
         HealthMonitor health = new HealthMonitor(jda, Path.of(config.healthFile()));
         health.start();
 
-        Runtime.getRuntime().addShutdownHook(new Thread(() -> shutdown(health, lavalink, jda, mongo)));
+        // HTTP server for /metrics, /health, /internal/lavalink-state
+        int metricsPort = config.metricsPort();
+        MetricsHttpServer metricsServer = new MetricsHttpServer(metrics, lavalink);
+        metricsServer.start(metricsPort);
+
+        Runtime.getRuntime().addShutdownHook(new Thread(() -> shutdown(health, lavalink, jda, mongo, metricsServer)));
 
         jda.awaitReady();
-        log.info("MujahidMusicV4 is up and running.");
+
+        // Register JDA guild gauge now that JDA is ready
+        metrics.bindJdaGuildGauge(jda);
+
+        log.info("MujahidMusicV4 is up and running. Metrics on :{}", metricsPort);
     }
 
-    private static void shutdown(HealthMonitor health, LavalinkManager lavalink, JDA jda, MongoStorage mongo) {
+    private static void shutdown(HealthMonitor health, LavalinkManager lavalink, JDA jda,
+                                 MongoStorage mongo, MetricsHttpServer metricsServer) {
         log.info("Shutting down...");
+        metricsServer.stop();
         health.stop();
         lavalink.shutdown();
         jda.shutdown();

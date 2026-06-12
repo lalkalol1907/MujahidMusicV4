@@ -4,6 +4,7 @@ import com.lalkalol.mujahid.audio.AddResult;
 import com.lalkalol.mujahid.audio.TrackScheduler;
 import com.lalkalol.mujahid.audio.TrackUserData;
 import com.lalkalol.mujahid.commands.CommandContext;
+import com.lalkalol.mujahid.metrics.MetricsHolder;
 import com.lalkalol.mujahid.util.Embeds;
 import com.lalkalol.mujahid.util.MusicControls;
 import dev.arbjerg.lavalink.client.player.LoadFailed;
@@ -66,6 +67,7 @@ public final class PlaySupport {
         if (result instanceof TrackLoaded trackLoaded) {
             Track track = withData(trackLoaded.getTrack(), userData);
             AddResult addResult = playNext ? scheduler.enqueueNext(track) : scheduler.enqueue(track);
+            MetricsHolder.get().recordTrackPlayed("url");
             sendAdded(event, track, addResult, scheduler.queueSize(), guildId, playNext);
         } else if (result instanceof SearchResult searchResult) {
             var tracks = searchResult.getTracks();
@@ -74,6 +76,7 @@ public final class PlaySupport {
             } else {
                 Track track = withData(tracks.getFirst(), userData);
                 AddResult addResult = playNext ? scheduler.enqueueNext(track) : scheduler.enqueue(track);
+                MetricsHolder.get().recordTrackPlayed("search");
                 sendAdded(event, track, addResult, scheduler.queueSize(), guildId, playNext);
             }
         } else if (result instanceof PlaylistLoaded playlistLoaded) {
@@ -81,14 +84,17 @@ public final class PlaySupport {
                     .map(track -> withData(track, userData))
                     .toList();
             scheduler.enqueueAll(tracks);
+            MetricsHolder.get().recordTrackPlayed("playlist");
             event.getHook().sendMessageEmbeds(
                     Embeds.success("Added **" + tracks.size() + "** tracks from playlist **"
                             + playlistLoaded.getInfo().getName() + "**.")
             ).queue();
         } else if (result instanceof NoMatches) {
+            MetricsHolder.get().recordTrackLoadFailure("no_matches");
             event.getHook().sendMessageEmbeds(Embeds.warning("No matches found for your input.")).queue();
         } else if (result instanceof LoadFailed loadFailed) {
             log.warn("Lavalink load failed in guild {}: {}", guildId, loadFailed.getException().getMessage());
+            MetricsHolder.get().recordTrackLoadFailure("lavalink_error");
             event.getHook().sendMessageEmbeds(
                     Embeds.error("Failed to load: " + loadFailed.getException().getMessage())
             ).queue();

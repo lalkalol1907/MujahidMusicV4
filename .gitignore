@@ -6,18 +6,39 @@ build/
 # Local JDK downloaded for offline builds
 .jdk/
 
-# Secrets & runtime data
-.env
-*.log
-data/
-
-# IntelliJ IDEA / Android Studio
+# IDE
 .idea/
 *.iml
 *.ipr
 *.iws
 out/
 
-# OS files
+# VS Code / Cursor
+.vscode/
+*.code-workspace
+
+# OS
 .DS_Store
 Thumbs.db
+
+# Logs
+*.log
+
+# Environment & secrets
+.env
+.env.*
+!.env.example
+
+# Docker local overrides
+docker-compose.override.yml
+
+# Local data volumes
+data/
+mongo-data/
+
+# Test / coverage
+*.exec
+.jacoco/
+
+# Lavalink plugins cache (downloaded at runtime)
+lavalink/plugins/

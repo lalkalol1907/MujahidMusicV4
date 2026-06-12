@@ -8,6 +8,8 @@ services:
         condition: service_started
       mongo:
         condition: service_healthy
+    ports:
+      - "${METRICS_PORT:-9090}:9090"
     environment:
       - DISCORD_TOKEN=${DISCORD_TOKEN}
       - DEV_GUILD_ID=${DEV_GUILD_ID:-}
@@ -16,6 +18,7 @@ services:
       - LAVALINK_PASSWORD=${LAVALINK_PASSWORD:-youshallnotpass}
       - MONGO_URI=mongodb://${MONGO_USER:-mujahid}:${MONGO_PASSWORD:-changeme}@mongo:27017/?authSource=admin
       - MONGO_DB=${MONGO_DB:-mujahid}
+      - METRICS_PORT=9090
 
   lavalink:
     image: ghcr.io/lavalink-devs/lavalink:4.2.2

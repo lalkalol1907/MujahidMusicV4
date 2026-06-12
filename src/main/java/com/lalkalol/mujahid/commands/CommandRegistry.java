@@ -21,6 +21,7 @@ import com.lalkalol.mujahid.commands.impl.SkipCommand;
 import com.lalkalol.mujahid.commands.impl.StopCommand;
 import com.lalkalol.mujahid.commands.impl.VolumeCommand;
 import com.lalkalol.mujahid.db.PlaylistRepository;
+import com.lalkalol.mujahid.metrics.BotMetrics;
 import com.lalkalol.mujahid.util.Embeds;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.interactions.commands.build.SlashCommandData;
@@ -36,11 +37,13 @@ public class CommandRegistry {
 
     private final LavalinkManager lavalink;
     private final PlaylistRepository playlists;
+    private final BotMetrics metrics;
     private final Map<String, Command> commands = new LinkedHashMap<>();
 
-    public CommandRegistry(LavalinkManager lavalink, PlaylistRepository playlists) {
+    public CommandRegistry(LavalinkManager lavalink, PlaylistRepository playlists, BotMetrics metrics) {
         this.lavalink = lavalink;
         this.playlists = playlists;
+        this.metrics = metrics;
     }
 
     public void registerDefaults() {
@@ -97,8 +100,10 @@ public class CommandRegistry {
 
         try {
             command.execute(new CommandContext(event, lavalink, playlists));
+            metrics.recordCommandExecution(event.getName());
         } catch (Exception e) {
             log.error("Error while executing /{} in guild {}", event.getName(), event.getGuild().getId(), e);
+            metrics.recordCommandError(event.getName());
             var embed = Embeds.error("Something went wrong: " + e.getMessage());
             if (event.isAcknowledged()) {
                 event.getHook().sendMessageEmbeds(embed).setEphemeral(true).queue();
