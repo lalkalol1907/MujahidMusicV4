@@ -3,10 +3,14 @@
   "private": true,
   "version": "1.0.0",
   "type": "module",
+  "engines": {
+    "node": ">=24"
+  },
   "scripts": {
     "dev": "vite",
-    "build": "vite build",
-    "preview": "vite preview"
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview",
+    "lint": "eslint ."
   },
   "dependencies": {
     "@tanstack/react-query": "^5.62.8",
@@ -16,10 +20,15 @@
     "recharts": "^2.15.0"
   },
   "devDependencies": {
+    "@eslint/js": "^9.17.0",
     "@types/react": "^19.0.2",
     "@types/react-dom": "^19.0.2",
     "@vitejs/plugin-react": "^4.3.4",
+    "eslint": "^9.17.0",
+    "eslint-plugin-react-hooks": "^5.1.0",
+    "eslint-plugin-react-refresh": "^0.4.16",
     "typescript": "~5.7.2",
+    "typescript-eslint": "^8.18.2",
     "vite": "^6.0.6"
   }
 }

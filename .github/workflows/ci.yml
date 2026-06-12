@@ -36,12 +36,22 @@ jobs:
       - name: Set Up Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.12'
+          python-version: '3.14'
 
       - name: Run Admin API Tests
         run: |
           pip install -e "./admin-api[dev]"
           pytest admin-api/tests -q
+
+      - name: Set Up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: admin-web/package-lock.json
+
+      - name: Run Admin Web Build
+        run: cd admin-web && npm ci && npm run build
 
   build:
     name: Build ${{ matrix.component }}

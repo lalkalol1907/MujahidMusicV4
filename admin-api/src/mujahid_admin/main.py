@@ -5,14 +5,17 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from mujahid_admin.config import settings
-from mujahid_admin.db.mongo import close_mongo
-from mujahid_admin.routers import audit, guilds, metrics, playlists, sessions, status
+from mujahid_admin.api.router import router
+from mujahid_admin.clients.bot import bot_client
+from mujahid_admin.core.config import settings
+from mujahid_admin.db.connection import close_mongo
 
 
 @asynccontextmanager
 async def lifespan(_: FastAPI):
+    await bot_client.start()
     yield
+    await bot_client.close()
     await close_mongo()
 
 
@@ -33,12 +36,7 @@ def create_app() -> FastAPI:
         allow_headers=["*"],
     )
 
-    app.include_router(status.router)
-    app.include_router(metrics.router)
-    app.include_router(sessions.router)
-    app.include_router(guilds.router)
-    app.include_router(playlists.router)
-    app.include_router(audit.router)
+    app.include_router(router)
 
     return app
 

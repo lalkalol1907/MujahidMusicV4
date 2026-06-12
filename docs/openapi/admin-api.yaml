@@ -1,3 +1,5 @@
+# Admin API — aligned with FastAPI Pydantic schemas
+
 openapi: 3.0.3
 info:
   title: MujahidMusic Admin API
@@ -17,6 +19,10 @@ paths:
       responses:
         "200":
           description: Status snapshot
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StatusResponse"
 
   /api/admin/metrics/summary:
     get:
@@ -24,6 +30,10 @@ paths:
       responses:
         "200":
           description: Metrics summary
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MetricsSummary"
 
   /api/admin/sessions:
     get:
@@ -31,6 +41,10 @@ paths:
       responses:
         "200":
           description: Sessions from bot control plane
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SessionsResponse"
 
   /api/admin/sessions/{guildId}:
     get:
@@ -44,6 +58,14 @@ paths:
       responses:
         "200":
           description: Queue tracks
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/QueueTrack"
+        "404":
+          description: No active session
 
   /api/admin/sessions/{guildId}/skip:
     post:
@@ -57,6 +79,12 @@ paths:
       responses:
         "200":
           description: Skipped
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ActionResponse"
+        "429":
+          description: Rate limit exceeded
 
   /api/admin/sessions/{guildId}/stop:
     post:
@@ -70,6 +98,10 @@ paths:
       responses:
         "200":
           description: Stopped
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ActionResponse"
 
   /api/admin/sessions/{guildId}/leave:
     post:
@@ -83,6 +115,10 @@ paths:
       responses:
         "200":
           description: Left
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ActionResponse"
 
   /api/admin/guilds:
     get:
@@ -90,6 +126,12 @@ paths:
       responses:
         "200":
           description: Guild list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Guild"
 
   /api/admin/playlists:
     get:
@@ -116,6 +158,10 @@ paths:
       responses:
         "200":
           description: Paginated playlists
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PaginatedPlaylists"
 
   /api/admin/playlists/stats:
     get:
@@ -123,6 +169,10 @@ paths:
       responses:
         "200":
           description: Stats
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PlaylistStats"
 
   /api/admin/playlists/{ownerId}/{name}:
     get:
@@ -141,6 +191,12 @@ paths:
       responses:
         "200":
           description: Playlist detail
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PlaylistDetail"
+        "404":
+          description: Playlist not found
     delete:
       summary: Delete playlist
       parameters:
@@ -157,6 +213,8 @@ paths:
       responses:
         "204":
           description: Deleted
+        "404":
+          description: Playlist not found
 
   /api/admin/audit:
     get:
@@ -175,9 +233,204 @@ paths:
       responses:
         "200":
           description: Audit entries
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PaginatedAudit"
 
 components:
   securitySchemes:
     AdminBearer:
       type: http
       scheme: bearer
+
+  schemas:
+    StatusResponse:
+      type: object
+      properties:
+        status:
+          type: string
+        uptimeSeconds:
+          type: integer
+        botReachable:
+          type: boolean
+        mongoReachable:
+          type: boolean
+        environment:
+          type: string
+
+    MetricsSummary:
+      type: object
+      properties:
+        guilds_total:
+          type: integer
+        active_players:
+          type: integer
+        commands:
+          type: array
+          items:
+            type: object
+            properties:
+              command:
+                type: string
+              count:
+                type: integer
+              errors:
+                type: integer
+        track_load_failures:
+          type: array
+          items:
+            type: object
+        playlist_ops:
+          type: array
+          items:
+            type: object
+
+    SessionsResponse:
+      type: object
+      properties:
+        nodes:
+          type: array
+          items:
+            type: object
+        sessions:
+          type: array
+          items:
+            $ref: "#/components/schemas/Session"
+
+    Session:
+      type: object
+      properties:
+        guildId:
+          type: string
+        guildName:
+          type: string
+        trackTitle:
+          type: string
+          nullable: true
+        trackAuthor:
+          type: string
+          nullable: true
+        positionMs:
+          type: integer
+        lengthMs:
+          type: integer
+        paused:
+          type: boolean
+        volume:
+          type: integer
+        queueSize:
+          type: integer
+        loopMode:
+          type: string
+
+    QueueTrack:
+      type: object
+      properties:
+        position:
+          type: integer
+        title:
+          type: string
+        author:
+          type: string
+        uri:
+          type: string
+        durationMs:
+          type: integer
+
+    ActionResponse:
+      type: object
+      properties:
+        status:
+          type: string
+
+    Guild:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        memberCount:
+          type: integer
+
+    PaginatedPlaylists:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            type: object
+            properties:
+              ownerId:
+                type: string
+              name:
+                type: string
+              trackCount:
+                type: integer
+        page:
+          type: integer
+        pageSize:
+          type: integer
+        total:
+          type: integer
+        totalPages:
+          type: integer
+
+    PlaylistStats:
+      type: object
+      properties:
+        totalPlaylists:
+          type: integer
+        totalTracks:
+          type: integer
+        topOwners:
+          type: array
+          items:
+            type: object
+
+    PlaylistDetail:
+      type: object
+      properties:
+        ownerId:
+          type: string
+        name:
+          type: string
+        tracks:
+          type: array
+          items:
+            type: object
+            properties:
+              encoded:
+                type: string
+              title:
+                type: string
+              uri:
+                type: string
+
+    PaginatedAudit:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            type: object
+            properties:
+              action:
+                type: string
+              target:
+                type: string
+              at:
+                type: string
+                nullable: true
+              ip:
+                type: string
+                nullable: true
+        page:
+          type: integer
+        pageSize:
+          type: integer
+        total:
+          type: integer
+        totalPages:
+          type: integer

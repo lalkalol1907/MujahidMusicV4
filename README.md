@@ -9,8 +9,8 @@ Discord music bot with a web admin panel: slash commands, per-guild Lavalink pla
 | **bot** | Java 24, JDA 6, Gradle | Discord gateway, Lavalink client, Control Plane |
 | **lavalink** | Lavalink 4.2 | Audio node (YouTube, SoundCloud, HTTP) |
 | **mongo** | MongoDB 7 | Playlists, admin audit log |
-| **admin-api** | Python 3.12, FastAPI | BFF: auth, proxy to bot, Mongo CRUD |
-| **admin-web** | React 19, Vite, TypeScript | Admin UI |
+| **admin-api** | Python 3.14, FastAPI | BFF: auth, proxy to bot, Mongo CRUD |
+| **admin-web** | Node 24 LTS, React 19, Vite, TypeScript | Admin UI |
 
 ## Architecture
 
@@ -46,7 +46,10 @@ MujahidMusicV4/
 ├── admin-api/              # Python FastAPI BFF
 ├── admin-web/              # React admin UI
 ├── lavalink/               # Lavalink config
-├── docs/openapi/           # API contracts
+├── docs/
+│   ├── architecture.md     # System architecture
+│   ├── data-model.md       # MongoDB schema
+│   └── openapi/            # API contracts
 ├── docker-compose.yml      # local dev (build from source)
 └── docker-compose.prod.yml # prod (pre-built images from Docker Hub)
 ```
@@ -139,7 +142,7 @@ GitHub Actions (`.github/workflows/ci.yml`):
 
 | Stage | Trigger | What runs |
 |---|---|---|
-| **Test** | push, PR | `./gradlew test`, `pytest admin-api/tests` |
+| **Test** | push, PR | `./gradlew test`, `pytest admin-api/tests`, `admin-web` build |
 | **Build** | tag `v*` | Build & push 3 images to Docker Hub |
 | **Deploy** | tag `v*` | SSH → write `.env` → `compose pull` → `up -d` |
 | **Release** | tag `v*` | GitHub Release with auto-generated notes + Docker image list |
@@ -187,5 +190,7 @@ cd admin-web && npm run build
 
 ## API docs
 
+- Architecture: [`docs/architecture.md`](docs/architecture.md)
+- Data model: [`docs/data-model.md`](docs/data-model.md)
 - Bot Control Plane: [`docs/openapi/bot-control.yaml`](docs/openapi/bot-control.yaml)
 - Admin API: [`docs/openapi/admin-api.yaml`](docs/openapi/admin-api.yaml) (also `/docs` in dev)
