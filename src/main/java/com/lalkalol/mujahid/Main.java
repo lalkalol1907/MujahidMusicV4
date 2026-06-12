@@ -6,6 +6,7 @@ import com.lalkalol.mujahid.config.Config;
 import com.lalkalol.mujahid.db.MongoStorage;
 import com.lalkalol.mujahid.db.PlaylistRepository;
 import com.lalkalol.mujahid.health.HealthMonitor;
+import com.lalkalol.mujahid.internal.ControlHttpServer;
 import com.lalkalol.mujahid.listeners.InteractionListener;
 import com.lalkalol.mujahid.metrics.BotMetrics;
 import com.lalkalol.mujahid.metrics.MetricsHolder;
@@ -59,24 +60,31 @@ public final class Main {
         HealthMonitor health = new HealthMonitor(jda, Path.of(config.healthFile()));
         health.start();
 
-        // HTTP server for /metrics, /health, /internal/lavalink-state
+        // HTTP server for /metrics, /health
         int metricsPort = config.metricsPort();
         MetricsHttpServer metricsServer = new MetricsHttpServer(metrics, lavalink);
         metricsServer.start(metricsPort);
 
-        Runtime.getRuntime().addShutdownHook(new Thread(() -> shutdown(health, lavalink, jda, mongo, metricsServer)));
+        ControlHttpServer controlServer = new ControlHttpServer(config.internalApiKey(), lavalink);
+        controlServer.start(config.internalPort());
+
+        Runtime.getRuntime().addShutdownHook(new Thread(() ->
+                shutdown(health, lavalink, jda, mongo, metricsServer, controlServer)));
 
         jda.awaitReady();
 
         // Register JDA guild gauge now that JDA is ready
         metrics.bindJdaGuildGauge(jda);
 
-        log.info("MujahidMusicV4 is up and running. Metrics on :{}", metricsPort);
+        log.info("MujahidMusicV4 is up and running. Metrics on :{}, Control Plane on :{}",
+                metricsPort, config.internalPort());
     }
 
     private static void shutdown(HealthMonitor health, LavalinkManager lavalink, JDA jda,
-                                 MongoStorage mongo, MetricsHttpServer metricsServer) {
+                                 MongoStorage mongo, MetricsHttpServer metricsServer,
+                                 ControlHttpServer controlServer) {
         log.info("Shutting down...");
+        controlServer.stop();
         metricsServer.stop();
         health.stop();
         lavalink.shutdown();

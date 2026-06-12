@@ -1,0 +1,183 @@
+openapi: 3.0.3
+info:
+  title: MujahidMusic Admin API
+  version: 1.0.0
+  description: BFF for admin-web (port 8080). Auth via Bearer ADMIN_API_KEY.
+
+servers:
+  - url: http://localhost:8080
+
+security:
+  - AdminBearer: []
+
+paths:
+  /api/admin/status:
+    get:
+      summary: Service and dependency status
+      responses:
+        "200":
+          description: Status snapshot
+
+  /api/admin/metrics/summary:
+    get:
+      summary: Aggregated Prometheus counters from bot
+      responses:
+        "200":
+          description: Metrics summary
+
+  /api/admin/sessions:
+    get:
+      summary: Live playback sessions
+      responses:
+        "200":
+          description: Sessions from bot control plane
+
+  /api/admin/sessions/{guildId}:
+    get:
+      summary: Session queue detail
+      parameters:
+        - name: guildId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Queue tracks
+
+  /api/admin/sessions/{guildId}/skip:
+    post:
+      summary: Skip track (moderation)
+      parameters:
+        - name: guildId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Skipped
+
+  /api/admin/sessions/{guildId}/stop:
+    post:
+      summary: Stop playback (moderation)
+      parameters:
+        - name: guildId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Stopped
+
+  /api/admin/sessions/{guildId}/leave:
+    post:
+      summary: Force leave voice (moderation)
+      parameters:
+        - name: guildId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Left
+
+  /api/admin/guilds:
+    get:
+      summary: All bot guilds
+      responses:
+        "200":
+          description: Guild list
+
+  /api/admin/playlists:
+    get:
+      summary: List playlists with pagination
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: pageSize
+          in: query
+          schema:
+            type: integer
+            default: 50
+        - name: ownerId
+          in: query
+          schema:
+            type: string
+        - name: name
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Paginated playlists
+
+  /api/admin/playlists/stats:
+    get:
+      summary: Playlist statistics
+      responses:
+        "200":
+          description: Stats
+
+  /api/admin/playlists/{ownerId}/{name}:
+    get:
+      summary: Playlist tracks
+      parameters:
+        - name: ownerId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: name
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Playlist detail
+    delete:
+      summary: Delete playlist
+      parameters:
+        - name: ownerId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: name
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "204":
+          description: Deleted
+
+  /api/admin/audit:
+    get:
+      summary: Admin audit log
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: pageSize
+          in: query
+          schema:
+            type: integer
+            default: 50
+      responses:
+        "200":
+          description: Audit entries
+
+components:
+  securitySchemes:
+    AdminBearer:
+      type: http
+      scheme: bearer

@@ -1,6 +1,5 @@
-# Production: pre-built bot image plus Lavalink and MongoDB.
-# Requires IMAGE_NAME and IMAGE_TAG in .env (written by the deploy job).
-# The bot reads its remaining config (DISCORD_TOKEN, LAVALINK_PASSWORD, etc.) from .env.
+# Production: pre-built images from Docker Hub (bot, admin-api, admin-web) + Lavalink + MongoDB.
+# Requires IMAGE_NAME, ADMIN_API_IMAGE_NAME, ADMIN_WEB_IMAGE_NAME, IMAGE_TAG in .env.
 services:
   bot:
     image: ${IMAGE_NAME}:${IMAGE_TAG}
@@ -15,8 +14,11 @@ services:
       LAVALINK_PORT: "2333"
       MONGO_URI: mongodb://${MONGO_USER:-mujahid}:${MONGO_PASSWORD:-changeme}@mongo:27017/?authSource=admin
       METRICS_PORT: "9090"
+      INTERNAL_PORT: "9091"
+      INTERNAL_API_KEY: ${INTERNAL_API_KEY}
     expose:
       - "9090"
+      - "9091"
     depends_on:
       lavalink:
         condition: service_healthy
@@ -64,6 +66,39 @@ services:
       interval: 10s
       timeout: 5s
       retries: 6
+    restart: unless-stopped
+
+  admin-api:
+    image: ${ADMIN_API_IMAGE_NAME}:${IMAGE_TAG}
+    labels:
+      scraper.name: mujahid-admin-api
+    env_file:
+      - .env
+    networks:
+      - mujahid-network
+    environment:
+      BOT_INTERNAL_URL: http://bot:9091
+      BOT_METRICS_URL: http://bot:9090
+      MONGO_URI: mongodb://${MONGO_USER:-mujahid}:${MONGO_PASSWORD:-changeme}@mongo:27017/?authSource=admin
+      MONGO_DB: ${MONGO_DB:-mujahid}
+      ENVIRONMENT: production
+    depends_on:
+      bot:
+        condition: service_started
+      mongo:
+        condition: service_healthy
+    restart: unless-stopped
+
+  admin-web:
+    image: ${ADMIN_WEB_IMAGE_NAME}:${IMAGE_TAG}
+    labels:
+      scraper.name: mujahid-admin-web
+    networks:
+      - mujahid-network
+    ports:
+      - "${ADMIN_WEB_PORT:-3000}:80"
+    depends_on:
+      - admin-api
     restart: unless-stopped
 
 networks:

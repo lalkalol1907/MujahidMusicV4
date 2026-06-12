@@ -10,6 +10,7 @@ services:
         condition: service_healthy
     ports:
       - "${METRICS_PORT:-9090}:9090"
+      - "${INTERNAL_PORT:-9091}:9091"
     environment:
       - DISCORD_TOKEN=${DISCORD_TOKEN}
       - DEV_GUILD_ID=${DEV_GUILD_ID:-}
@@ -19,13 +20,14 @@ services:
       - MONGO_URI=mongodb://${MONGO_USER:-mujahid}:${MONGO_PASSWORD:-changeme}@mongo:27017/?authSource=admin
       - MONGO_DB=${MONGO_DB:-mujahid}
       - METRICS_PORT=9090
+      - INTERNAL_PORT=9091
+      - INTERNAL_API_KEY=${INTERNAL_API_KEY:-change-me-internal-key-min-32-chars}
 
   lavalink:
     image: ghcr.io/lavalink-devs/lavalink:4.2.2
     container_name: mujahid-lavalink
     restart: unless-stopped
     environment:
-      # Picked up by application.yml via ${LAVALINK_PASSWORD}
       - LAVALINK_PASSWORD=${LAVALINK_PASSWORD:-youshallnotpass}
       - _JAVA_OPTIONS=-Xmx512m
     volumes:
@@ -39,6 +41,9 @@ services:
     restart: unless-stopped
     ports:
       - "27017:27017"
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_USER:-mujahid}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_PASSWORD:-changeme}
     volumes:
       - mongo-data:/data/db
     healthcheck:
@@ -46,6 +51,36 @@ services:
       interval: 10s
       timeout: 5s
       retries: 6
+
+  admin-api:
+    build: ./admin-api
+    container_name: mujahid-admin-api
+    restart: unless-stopped
+    depends_on:
+      bot:
+        condition: service_started
+      mongo:
+        condition: service_healthy
+    ports:
+      - "${ADMIN_API_PORT:-8080}:8080"
+    environment:
+      - ADMIN_API_KEY=${ADMIN_API_KEY:-change-me-admin-key-min-32-chars}
+      - ADMIN_CORS_ORIGIN=${ADMIN_CORS_ORIGIN:-http://localhost:5173}
+      - BOT_INTERNAL_URL=http://bot:9091
+      - BOT_METRICS_URL=http://bot:9090
+      - INTERNAL_API_KEY=${INTERNAL_API_KEY:-change-me-internal-key-min-32-chars}
+      - MONGO_URI=mongodb://${MONGO_USER:-mujahid}:${MONGO_PASSWORD:-changeme}@mongo:27017/?authSource=admin
+      - MONGO_DB=${MONGO_DB:-mujahid}
+      - ENVIRONMENT=${ENVIRONMENT:-development}
+
+  admin-web:
+    build: ./admin-web
+    container_name: mujahid-admin-web
+    restart: unless-stopped
+    depends_on:
+      - admin-api
+    ports:
+      - "${ADMIN_WEB_PORT:-3000}:80"
 
 volumes:
   mongo-data:

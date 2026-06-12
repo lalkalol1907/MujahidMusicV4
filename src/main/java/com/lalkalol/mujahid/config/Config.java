@@ -15,7 +15,9 @@ public record Config(
         String mongoDatabase,
         String healthFile,
         String logLevel,
-        int metricsPort
+        int metricsPort,
+        int internalPort,
+        String internalApiKey
 ) {
     public String lavalinkUri() {
         return "ws://" + lavalinkHost + ":" + lavalinkPort;
@@ -48,6 +50,11 @@ public record Config(
         String metricsPortRaw = value(dotenv, "METRICS_PORT");
         int metricsPort = metricsPortRaw != null ? Integer.parseInt(metricsPortRaw) : 9090;
 
+        String internalPortRaw = value(dotenv, "INTERNAL_PORT");
+        int internalPort = internalPortRaw != null ? Integer.parseInt(internalPortRaw) : 9091;
+
+        String internalApiKey = valueOrDefault(dotenv, "INTERNAL_API_KEY", "change-me-internal-key-min-32-chars");
+
         return new Config(
                 token,
                 valueOrDefault(dotenv, "LAVALINK_HOST", "localhost"),
@@ -58,7 +65,9 @@ public record Config(
                 valueOrDefault(dotenv, "MONGO_DB", "mujahid"),
                 valueOrDefault(dotenv, "HEALTH_FILE", "/tmp/mujahid-health"),
                 valueOrDefault(dotenv, "LOG_LEVEL", "INFO"),
-                metricsPort
+                metricsPort,
+                internalPort,
+                internalApiKey
         );
     }
 

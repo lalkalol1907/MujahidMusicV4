@@ -8,6 +8,7 @@ shadow = "8.3.5"
 junit = "5.11.4"
 mockito = "5.14.2"
 micrometer = "1.13.6"
+gson = "2.11.0"
 
 [libraries]
 jda = { module = "net.dv8tion:JDA", version.ref = "jda" }
@@ -19,6 +20,7 @@ junit-jupiter = { module = "org.junit.jupiter:junit-jupiter", version.ref = "jun
 mockito-junit-jupiter = { module = "org.mockito:mockito-junit-jupiter", version.ref = "mockito" }
 micrometer-core = { module = "io.micrometer:micrometer-core", version.ref = "micrometer" }
 micrometer-registry-prometheus = { module = "io.micrometer:micrometer-registry-prometheus", version.ref = "micrometer" }
+gson = { module = "com.google.code.gson:gson", version.ref = "gson" }
 
 [plugins]
 shadow = { id = "com.gradleup.shadow", version.ref = "shadow" }

@@ -21,6 +21,7 @@ dependencies {
     implementation libs.logback.classic
     implementation libs.micrometer.core
     implementation libs.micrometer.registry.prometheus
+    implementation libs.gson
 
     testImplementation libs.junit.jupiter
     testImplementation libs.mockito.junit.jupiter

@@ -50,6 +50,31 @@ java -jar build/libs/MujahidMusicV4.jar
 
 **Docker (dev):** `docker compose up -d --build`
 
+**Admin panel (full stack):** `docker compose up -d --build` — starts `bot`, `lavalink`, `mongo`, `admin-api`, `admin-web`.
+
+| Service | URL | Notes |
+|---|---|---|
+| admin-web | http://localhost:3000 | React UI; login with `ADMIN_API_KEY` |
+| admin-api | http://localhost:8080/docs | FastAPI BFF (dev only) |
+| bot metrics | http://localhost:9090/metrics | Prometheus |
+| bot control | http://localhost:9091/internal/* | `INTERNAL_API_KEY` only |
+
+**Local dev (without Docker for admin):**
+
+```bash
+# terminal 1 — bot (needs DISCORD_TOKEN, mongo, lavalink)
+./gradlew shadowJar && java -jar build/libs/MujahidMusicV4.jar
+
+# terminal 2 — admin-api
+cd admin-api && pip install -e ".[dev]"
+uvicorn mujahid_admin.main:app --reload --port 8080
+
+# terminal 3 — admin-web
+cd admin-web && npm install && npm run dev
+```
+
+Set `ADMIN_API_KEY`, `INTERNAL_API_KEY`, `BOT_INTERNAL_URL`, `BOT_METRICS_URL`, `MONGO_URI` in `.env` (see `.env.example`).
+
 ## Configuration
 
 | Variable | Required | Default |
@@ -63,6 +88,10 @@ java -jar build/libs/MujahidMusicV4.jar
 | `MONGO_DB` | no | `mujahid` |
 | `HEALTH_FILE` | no | `/tmp/mujahid-health` |
 | `LOG_LEVEL` | no | `INFO` (`DEBUG`, `TRACE`, …) |
+| `INTERNAL_PORT` | no | `9091` (Control Plane) |
+| `INTERNAL_API_KEY` | no | service-to-service key for admin-api → bot |
+| `ADMIN_API_KEY` | no | admin-web → admin-api |
+| `ADMIN_CORS_ORIGIN` | no | `http://localhost:5173` |
 
 ## Build options
 
@@ -76,14 +105,20 @@ This project uses **Gradle Groovy DSL** (`build.gradle`). Alternatives considere
 
 ## CI / deploy
 
-1. **Test** — `./gradlew test` on push / PR
-2. **Build** — Docker push on tag `v*`
-3. **Deploy** — SSH + `docker-compose.prod.yml`
+1. **Test** — `./gradlew test` + `pytest admin-api/tests` on push / PR
+2. **Build** — push 3 images to Docker Hub on tag `v*`:
+   - `{user}/{repo}` — bot
+   - `{user}/{repo}-admin-api`
+   - `{user}/{repo}-admin-web`
+3. **Deploy** — SSH + `docker compose -f docker-compose.prod.yml pull && up -d`
+
+Prod `.env` must include `IMAGE_NAME`, `ADMIN_API_IMAGE_NAME`, `ADMIN_WEB_IMAGE_NAME`, `IMAGE_TAG` (set by CI deploy to the git tag, e.g. `v1.2.0`).
 
 ## Tests
 
 ```bash
 ./gradlew test
+cd admin-api && pytest
 ```
 
-79 tests — utilities, command logic, `CommandContext`, `CommandRegistry`.
+Bot tests — utilities, commands, Control Plane auth. Admin-api tests — auth, playlists, metrics parser.

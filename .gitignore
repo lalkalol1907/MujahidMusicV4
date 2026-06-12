@@ -42,3 +42,10 @@ mongo-data/
 
 # Lavalink plugins cache (downloaded at runtime)
 lavalink/plugins/
+
+# Admin services
+admin-web/node_modules/
+admin-web/dist/
+admin-api/.venv/
+admin-api/**/__pycache__/
+admin-api/.pytest_cache/

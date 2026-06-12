@@ -1,0 +1,206 @@
+openapi: 3.0.3
+info:
+  title: MujahidMusic Bot Control Plane
+  version: 1.0.0
+  description: Internal service-to-service API (port 9091). Auth via Bearer INTERNAL_API_KEY.
+
+servers:
+  - url: http://bot:9091
+
+security:
+  - InternalBearer: []
+
+paths:
+  /internal/health:
+    get:
+      summary: Control plane liveness
+      security: []
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: UP
+
+  /internal/guilds:
+    get:
+      summary: All guilds the bot is in
+      responses:
+        "200":
+          description: Guild list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Guild"
+
+  /internal/sessions:
+    get:
+      summary: Live Lavalink sessions
+      responses:
+        "200":
+          description: Nodes and active sessions
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SessionsResponse"
+
+  /internal/sessions/{guildId}/queue:
+    get:
+      summary: Queue for a guild session
+      parameters:
+        - name: guildId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Queue tracks
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/QueueTrack"
+        "404":
+          description: No active session
+
+  /internal/sessions/{guildId}/skip:
+    post:
+      summary: Skip current track
+      parameters:
+        - name: guildId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Skipped
+        "404":
+          description: No active player
+
+  /internal/sessions/{guildId}/stop:
+    post:
+      summary: Stop playback and clear queue
+      parameters:
+        - name: guildId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Stopped
+        "404":
+          description: No active player
+
+  /internal/sessions/{guildId}/leave:
+    post:
+      summary: Disconnect from voice channel
+      parameters:
+        - name: guildId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Left voice channel
+        "404":
+          description: Not in voice channel
+
+components:
+  securitySchemes:
+    InternalBearer:
+      type: http
+      scheme: bearer
+
+  schemas:
+    Guild:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        memberCount:
+          type: integer
+
+    Node:
+      type: object
+      properties:
+        name:
+          type: string
+        uri:
+          type: string
+        connected:
+          type: boolean
+        sessionId:
+          type: string
+          nullable: true
+        players:
+          type: integer
+        playing:
+          type: integer
+
+    Session:
+      type: object
+      properties:
+        guildId:
+          type: string
+        guildName:
+          type: string
+        nodeName:
+          type: string
+        trackTitle:
+          type: string
+          nullable: true
+        trackAuthor:
+          type: string
+          nullable: true
+        positionMs:
+          type: integer
+        lengthMs:
+          type: integer
+        paused:
+          type: boolean
+        volume:
+          type: integer
+        queueSize:
+          type: integer
+        loopMode:
+          type: string
+
+    SessionsResponse:
+      type: object
+      properties:
+        nodes:
+          type: array
+          items:
+            $ref: "#/components/schemas/Node"
+        sessions:
+          type: array
+          items:
+            $ref: "#/components/schemas/Session"
+
+    QueueTrack:
+      type: object
+      properties:
+        position:
+          type: integer
+        title:
+          type: string
+        author:
+          type: string
+        uri:
+          type: string
+        durationMs:
+          type: integer
