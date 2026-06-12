@@ -4,6 +4,8 @@
 services:
   bot:
     image: ${IMAGE_NAME}:${IMAGE_TAG}
+    labels:
+      scraper.name: mujahid-bot
     env_file:
       - .env
     networks:
@@ -24,6 +26,8 @@ services:
 
   lavalink:
     image: ghcr.io/lavalink-devs/lavalink:4.2.2
+    labels:
+      scraper.name: lavalink
     env_file:
       - .env
     networks:
@@ -42,6 +46,8 @@ services:
 
   mongo:
     image: mongo:7
+    labels:
+      scraper.name: mujahid-mongo
     env_file:
       - .env
     ports:
