@@ -3,6 +3,7 @@ package com.lalkalol.mujahid.commands;
 import com.lalkalol.mujahid.audio.LavalinkManager;
 import com.lalkalol.mujahid.commands.impl.LoopCommand;
 import com.lalkalol.mujahid.db.PlaylistRepository;
+import com.lalkalol.mujahid.metrics.BotMetrics;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.interactions.InteractionHook;
 import net.dv8tion.jda.api.requests.restaction.interactions.ReplyCallbackAction;
@@ -28,13 +29,16 @@ class CommandRegistryTest {
     private PlaylistRepository playlists;
 
     @Mock
+    private BotMetrics metrics;
+
+    @Mock
     private SlashCommandInteractionEvent event;
 
     private CommandRegistry registry;
 
     @BeforeEach
     void setUp() {
-        registry = new CommandRegistry(lavalink, playlists);
+        registry = new CommandRegistry(lavalink, playlists, metrics);
         registry.register(new LoopCommand());
     }
 
