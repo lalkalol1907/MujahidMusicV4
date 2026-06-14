@@ -9,7 +9,7 @@
   "scripts": {
     "dev": "bun run --watch src/index.ts",
     "start": "bun run src/index.ts",
-    "test": "bun test",
+    "test": "ADMIN_API_KEY=test-admin-key INTERNAL_API_KEY=test-internal-key bun test",
     "lint": "tsc --noEmit"
   },
   "dependencies": {

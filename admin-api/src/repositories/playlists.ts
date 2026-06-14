@@ -30,6 +30,12 @@ export interface PlaylistStatsRow {
   top_owners: PlaylistOwnerSummary[];
 }
 
+const MAX_NAME_SEARCH_LENGTH = 100;
+
+function escapeRegex(value: string): string {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
 export async function listPlaylists(
   page: number,
   pageSize: number,
@@ -42,7 +48,10 @@ export async function listPlaylists(
     query.ownerId = Number(ownerId);
   }
   if (name) {
-    query.name = { $regex: name, $options: "i" };
+    const trimmed = name.trim();
+    if (trimmed.length > 0 && trimmed.length <= MAX_NAME_SEARCH_LENGTH) {
+      query.name = { $regex: `^${escapeRegex(trimmed)}`, $options: "i" };
+    }
   }
 
   const total = await collection.countDocuments(query);
