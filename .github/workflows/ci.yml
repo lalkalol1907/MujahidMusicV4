@@ -39,6 +39,9 @@ jobs:
           bun-version: "1.2"
 
       - name: Run Admin API Tests
+        env:
+          ADMIN_API_KEY: test-admin-key
+          INTERNAL_API_KEY: test-internal-key
         run: cd admin-api && bun install --frozen-lockfile && bun test
 
       - name: Set Up Node
