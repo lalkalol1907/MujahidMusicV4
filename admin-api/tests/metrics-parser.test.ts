@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { buildMetricsSummary, parsePrometheus } from "../src/services/metrics-parser";
+import { buildMetricsSummary, parsePrometheus } from "@/services/metrics-parser";
 
 describe("metrics parser", () => {
   test("parses prometheus text", () => {

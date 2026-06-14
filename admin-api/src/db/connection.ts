@@ -1,5 +1,5 @@
 import { MongoClient, type Db } from "mongodb";
-import { settings } from "../core/config";
+import { settings } from "@/core/config";
 
 let client: MongoClient | null = null;
 

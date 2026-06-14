@@ -1,13 +1,12 @@
 import { Hono } from "hono";
-import { checkRateLimit, clientIp, verifyAdmin } from "../core/auth";
-import { HttpError } from "../core/errors";
-import { BotNotFoundError } from "../core/errors";
-import * as auditService from "../services/audit";
-import * as guildsService from "../services/guilds";
-import * as metricsService from "../services/metrics";
-import * as playlistsService from "../services/playlists";
-import * as sessionsService from "../services/sessions";
-import * as statusService from "../services/status";
+import { checkRateLimit, clientIp, verifyAdmin } from "@/core/auth";
+import { BotNotFoundError, HttpError } from "@/core/errors";
+import * as auditService from "@/services/audit";
+import * as guildsService from "@/services/guilds";
+import * as metricsService from "@/services/metrics";
+import * as playlistsService from "@/services/playlists";
+import * as sessionsService from "@/services/sessions";
+import * as statusService from "@/services/status";
 
 function parsePage(value: string | undefined, fallback = 1): number {
   const page = Number(value ?? fallback);

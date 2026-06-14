@@ -1,7 +1,7 @@
-import { botClient } from "../clients/bot";
-import { settings } from "../core/config";
-import { pingMongo } from "../db/connection";
-import type { StatusResponse } from "../types";
+import { botClient } from "@/clients/bot";
+import { settings } from "@/core/config";
+import { pingMongo } from "@/db/connection";
+import type { StatusResponse } from "@/types";
 
 const startedAt = Date.now();
 

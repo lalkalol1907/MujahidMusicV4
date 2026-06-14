@@ -1,9 +1,9 @@
 import { Hono } from "hono";
 import { cors } from "hono/cors";
-import { settings } from "./core/config";
-import { HttpError } from "./core/errors";
-import { closeMongo } from "./db/connection";
-import { createAdminRoutes } from "./routes/admin";
+import { settings } from "@/core/config";
+import { HttpError } from "@/core/errors";
+import { closeMongo } from "@/db/connection";
+import { createAdminRoutes } from "@/routes/admin";
 
 export function createApp() {
   const app = new Hono();

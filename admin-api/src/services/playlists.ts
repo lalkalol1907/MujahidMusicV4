@@ -1,6 +1,6 @@
-import * as auditRepo from "../repositories/audit";
-import * as playlistRepo from "../repositories/playlists";
-import type { PaginatedPlaylists, PlaylistDetail, PlaylistStats, PlaylistTrack } from "../types";
+import * as auditRepo from "@/repositories/audit";
+import * as playlistRepo from "@/repositories/playlists";
+import type { PaginatedPlaylists, PlaylistDetail, PlaylistStats } from "@/types";
 
 function paginate(page: number, pageSize: number, total: number): number {
   return Math.max(Math.ceil(total / pageSize), 1);
@@ -34,7 +34,7 @@ export async function getPlaylist(ownerId: string, name: string): Promise<Playli
   return {
     ownerId: String(doc.owner_id),
     name: doc.name,
-    tracks: doc.tracks as PlaylistTrack[],
+    tracks: doc.tracks,
   };
 }
 

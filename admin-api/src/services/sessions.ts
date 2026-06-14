@@ -1,7 +1,7 @@
-import { botClient } from "../clients/bot";
-import { BotNotFoundError } from "../core/errors";
-import * as auditRepo from "../repositories/audit";
-import type { ActionResponse, QueueTrack, SessionsResponse } from "../types";
+import { botClient } from "@/clients/bot";
+import { BotNotFoundError } from "@/core/errors";
+import * as auditRepo from "@/repositories/audit";
+import type { ActionResponse, QueueTrack, SessionsResponse } from "@/types";
 
 export async function listSessions(): Promise<SessionsResponse> {
   return botClient.get<SessionsResponse>("/internal/sessions");

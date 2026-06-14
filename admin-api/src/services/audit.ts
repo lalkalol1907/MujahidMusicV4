@@ -1,5 +1,5 @@
-import * as auditRepo from "../repositories/audit";
-import type { PaginatedAudit } from "../types";
+import * as auditRepo from "@/repositories/audit";
+import type { PaginatedAudit } from "@/types";
 
 function paginate(page: number, pageSize: number, total: number): number {
   return Math.max(Math.ceil(total / pageSize), 1);

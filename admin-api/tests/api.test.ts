@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, mock, test } from "bun:test";
-import { createApp } from "../src/app";
-import { settings } from "../src/core/config";
-import { resetRateLimits } from "../src/core/auth";
+import { createApp } from "@/app";
+import { resetRateLimits } from "@/core/auth";
+import { settings } from "@/core/config";
 
 const authHeaders = { Authorization: "Bearer test-admin-key" };
 
@@ -18,7 +18,7 @@ describe("admin api", () => {
   });
 
   test("status authorized", async () => {
-    mock.module("../src/services/status", () => ({
+    mock.module("@/services/status", () => ({
       getStatus: async () => ({
         status: "UP",
         uptimeSeconds: 1,
@@ -39,7 +39,7 @@ describe("admin api", () => {
   });
 
   test("sessions skip", async () => {
-    mock.module("../src/services/sessions", () => ({
+    mock.module("@/services/sessions", () => ({
       listSessions: async () => ({ nodes: [], sessions: [] }),
       getSessionQueue: async () => [],
       moderateSession: async (_guildId: string, action: string) => {
@@ -60,7 +60,7 @@ describe("admin api", () => {
   });
 
   test("audit list", async () => {
-    mock.module("../src/services/audit", () => ({
+    mock.module("@/services/audit", () => ({
       listAudit: async () => ({
         items: [{ action: "SKIP", target: "123", at: "2026-01-01T00:00:00.000Z", ip: "127.0.0.1" }],
         page: 1,
@@ -87,7 +87,7 @@ describe("admin api", () => {
   });
 
   test("playlists list", async () => {
-    mock.module("../src/services/playlists", () => ({
+    mock.module("@/services/playlists", () => ({
       listPlaylists: async () => ({
         items: [],
         page: 1,

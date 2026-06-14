@@ -1,65 +1,56 @@
-import { settings } from "../core/config";
-import { BotError, BotNotFoundError } from "../core/errors";
+import { settings } from "@/core/config";
+import { BotError, BotNotFoundError } from "@/core/errors";
 
 class BotClient {
-  private headers: Record<string, string>;
-
-  constructor() {
-    this.headers = { Authorization: `Bearer ${settings.internalApiKey}` };
+  private headers(): HeadersInit {
+    return {
+      Authorization: `Bearer ${settings.internalApiKey}`,
+      "Content-Type": "application/json",
+    };
   }
 
-  async get<T>(path: string): Promise<T> {
-    const response = await fetch(`${settings.botInternalUrl}${path}`, {
-      headers: this.headers,
-      signal: AbortSignal.timeout(10_000),
+  private async request<T>(url: string, init?: RequestInit): Promise<T> {
+    const response = await fetch(url, {
+      ...init,
+      headers: { ...this.headers(), ...init?.headers },
     });
     if (response.status === 404) {
       throw new BotNotFoundError(await response.text());
     }
     if (!response.ok) {
-      throw new BotError(await response.text());
+      throw new BotError(`Bot request failed: ${response.status} ${await response.text()}`);
     }
-    return response.json() as Promise<T>;
-  }
-
-  async post<T>(path: string): Promise<T> {
-    const response = await fetch(`${settings.botInternalUrl}${path}`, {
-      method: "POST",
-      headers: this.headers,
-      signal: AbortSignal.timeout(10_000),
-    });
-    if (response.status === 404) {
-      throw new BotNotFoundError(await response.text());
+    if (response.status === 204) {
+      return undefined as T;
     }
-    if (!response.ok) {
-      throw new BotError(await response.text());
-    }
-    const text = await response.text();
-    if (!text) {
-      return { status: "ok" } as T;
-    }
-    return JSON.parse(text) as T;
-  }
-
-  async fetchMetricsText(): Promise<string> {
-    const response = await fetch(`${settings.botMetricsUrl}/metrics`, {
-      signal: AbortSignal.timeout(10_000),
-    });
-    if (!response.ok) {
-      throw new BotError(await response.text());
-    }
-    return response.text();
+    return (await response.json()) as T;
   }
 
   async healthCheck(): Promise<boolean> {
     try {
       const response = await fetch(`${settings.botInternalUrl}/internal/health`, {
-        signal: AbortSignal.timeout(5_000),
+        headers: this.headers(),
       });
-      return response.status === 200;
+      return response.ok;
     } catch {
       return false;
     }
+  }
+
+  async fetchMetricsText(): Promise<string> {
+    const response = await fetch(`${settings.botMetricsUrl}/metrics`);
+    if (!response.ok) {
+      throw new BotError(`Metrics scrape failed: ${response.status}`);
+    }
+    return response.text();
+  }
+
+  get<T>(path: string): Promise<T> {
+    return this.request<T>(`${settings.botInternalUrl}${path}`);
+  }
+
+  post<T>(path: string): Promise<T> {
+    return this.request<T>(`${settings.botInternalUrl}${path}`, { method: "POST" });
   }
 }
 
