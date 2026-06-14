@@ -6,10 +6,10 @@ Discord music bot with a web admin panel: slash commands, per-guild Lavalink pla
 
 | Service | Runtime | Role |
 |---|---|---|
-| **bot** | Java 24, JDA 6, Gradle | Discord gateway, Lavalink client, Control Plane |
+| **bot** | Kotlin, Java 24, JDA 6, Gradle | Discord gateway, Lavalink client, Control Plane |
 | **lavalink** | Lavalink 4.2 | Audio node (YouTube, SoundCloud, HTTP) |
 | **mongo** | MongoDB 7 | Playlists, admin audit log |
-| **admin-api** | Python 3.14, FastAPI | BFF: auth, proxy to bot, Mongo CRUD |
+| **admin-api** | Bun, Hono, TypeScript | BFF: auth, proxy to bot, Mongo CRUD |
 | **admin-web** | Node 24 LTS, React 19, Vite, TypeScript | Admin UI |
 
 ## Architecture
@@ -42,8 +42,8 @@ admin-web ──► admin-api ──► bot :9091  (sessions, guilds, moderation
 
 ```
 MujahidMusicV4/
-├── src/                    # Java bot
-├── admin-api/              # Python FastAPI BFF
+├── src/main/kotlin/        # Kotlin bot
+├── admin-api/              # Bun + Hono BFF
 ├── admin-web/              # React admin UI
 ├── lavalink/               # Lavalink config
 ├── docs/
@@ -74,7 +74,7 @@ docker compose up -d --build
 | Service | URL | Notes |
 |---|---|---|
 | admin-web | http://localhost:3000 | Login with `ADMIN_API_KEY` |
-| admin-api | http://localhost:8080/docs | Swagger (disabled when `ENVIRONMENT=production`) |
+| admin-api | http://localhost:8080/docs | API info in dev (see `docs/openapi/admin-api.yaml`) |
 | bot metrics | http://localhost:9090/metrics | Prometheus |
 | bot control | http://localhost:9091/internal/* | `INTERNAL_API_KEY` only |
 
@@ -85,8 +85,7 @@ docker compose up -d --build
 ./gradlew shadowJar && java -jar build/libs/MujahidMusicV4.jar
 
 # 2 — admin-api
-cd admin-api && pip install -e ".[dev]"
-uvicorn mujahid_admin.main:app --reload --port 8080
+cd admin-api && bun install && bun run dev
 
 # 3 — admin-web (proxies /api → :8080)
 cd admin-web && npm install && npm run dev
@@ -142,7 +141,7 @@ GitHub Actions (`.github/workflows/ci.yml`):
 
 | Stage | Trigger | What runs |
 |---|---|---|
-| **Test** | push, PR | `./gradlew test`, `pytest admin-api/tests`, `admin-web` build |
+| **Test** | push, PR | `./gradlew test`, `bun test` (admin-api), `admin-web` build |
 | **Build** | tag `v*` | Build & push 3 images to Docker Hub |
 | **Deploy** | tag `v*` | SSH → write `.env` → `compose pull` → `up -d` |
 | **Release** | tag `v*` | GitHub Release with auto-generated notes + Docker image list |
@@ -184,7 +183,7 @@ git push origin v1.0.0
 
 ```bash
 ./gradlew test
-pip install -e "./admin-api[dev]" && pytest admin-api/tests -q
+cd admin-api && bun test
 cd admin-web && npm run build
 ```
 

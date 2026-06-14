@@ -1,4 +1,7 @@
 [versions]
+kotlin = "2.1.10"
+coroutines = "1.10.1"
+serialization = "1.8.0"
 jda = "6.4.1"
 lavalinkClient = "3.4.0"
 mongodb = "5.8.0"
@@ -7,10 +10,15 @@ dotenv = "3.2.0"
 shadow = "8.3.5"
 junit = "5.11.4"
 mockito = "5.14.2"
+mockitoKotlin = "5.4.0"
 micrometer = "1.13.6"
-gson = "2.11.0"
 
 [libraries]
+kotlin-stdlib = { module = "org.jetbrains.kotlin:kotlin-stdlib", version.ref = "kotlin" }
+kotlinx-coroutines-core = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version.ref = "coroutines" }
+kotlinx-coroutines-reactor = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-reactor", version.ref = "coroutines" }
+kotlinx-coroutines-jdk8 = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-jdk8", version.ref = "coroutines" }
+kotlinx-serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "serialization" }
 jda = { module = "net.dv8tion:JDA", version.ref = "jda" }
 lavalink-client = { module = "dev.arbjerg:lavalink-client", version.ref = "lavalinkClient" }
 mongodb-driver-sync = { module = "org.mongodb:mongodb-driver-sync", version.ref = "mongodb" }
@@ -18,9 +26,11 @@ logback-classic = { module = "ch.qos.logback:logback-classic", version.ref = "lo
 dotenv-java = { module = "io.github.cdimascio:dotenv-java", version.ref = "dotenv" }
 junit-jupiter = { module = "org.junit.jupiter:junit-jupiter", version.ref = "junit" }
 mockito-junit-jupiter = { module = "org.mockito:mockito-junit-jupiter", version.ref = "mockito" }
+mockito-kotlin = { module = "org.mockito.kotlin:mockito-kotlin", version.ref = "mockitoKotlin" }
 micrometer-core = { module = "io.micrometer:micrometer-core", version.ref = "micrometer" }
 micrometer-registry-prometheus = { module = "io.micrometer:micrometer-registry-prometheus", version.ref = "micrometer" }
-gson = { module = "com.google.code.gson:gson", version.ref = "gson" }
 
 [plugins]
+kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
+kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
 shadow = { id = "com.gradleup.shadow", version.ref = "shadow" }

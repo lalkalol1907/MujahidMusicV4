@@ -1,14 +1,16 @@
-FROM python:3.14-slim
-
+FROM oven/bun:1.2-alpine AS base
 WORKDIR /app
 
-ENV PYTHONDONTWRITEBYTECODE=1
-ENV PYTHONUNBUFFERED=1
+FROM base AS install
+COPY package.json bun.lock ./
+RUN bun install --frozen-lockfile
 
-COPY pyproject.toml ./
-COPY src/ ./src/
-RUN pip install --no-cache-dir .
+FROM base AS release
+COPY --from=install /app/node_modules ./node_modules
+COPY package.json bun.lock tsconfig.json ./
+COPY src ./src
 
+ENV PORT=8080
 EXPOSE 8080
 
-CMD ["uvicorn", "mujahid_admin.main:app", "--host", "0.0.0.0", "--port", "8080"]
+CMD ["bun", "run", "src/index.ts"]

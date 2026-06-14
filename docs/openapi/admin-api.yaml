@@ -1,4 +1,4 @@
-# Admin API — aligned with FastAPI Pydantic schemas
+# Admin API — aligned with TypeScript response types
 
 openapi: 3.0.3
 info:

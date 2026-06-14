@@ -17,25 +17,25 @@ admin-web ──► admin-api ──► bot :9091  (sessions, guilds, moderation
 
 | Service | Runtime | Role |
 |---|---|---|
-| **bot** | Java 24, JDA 6 | Discord gateway, Lavalink client, Control Plane |
+| **bot** | Kotlin, Java 24, JDA 6 | Discord gateway, Lavalink client, Control Plane |
 | **lavalink** | Lavalink 4.2 | Audio node |
 | **mongo** | MongoDB 7 | Playlists, admin audit log |
-| **admin-api** | Python 3.14, FastAPI | BFF: auth, proxy to bot, Mongo CRUD |
+| **admin-api** | Bun, Hono, TypeScript | BFF: auth, proxy to bot, Mongo CRUD |
 | **admin-web** | Node 24 LTS, React 19, Vite | Admin UI (FSD) |
 
 ## admin-api layers
 
 ```
-api/routes  →  services  →  repositories / clients
-                ↓
-             schemas (Pydantic)
+routes  →  services  →  repositories / clients
+              ↓
+           types (TypeScript)
 ```
 
-- **Routes** — HTTP handlers, validation, auth
+- **Routes** — Hono handlers, auth, rate limiting
 - **Services** — orchestration (e.g. session moderation + audit)
 - **Repositories** — MongoDB I/O
-- **Clients** — bot HTTP client (shared AsyncClient via lifespan)
-- **Schemas** — request/response models with camelCase API aliases
+- **Clients** — bot HTTP client (fetch)
+- **Types** — request/response shapes (camelCase JSON)
 
 ## admin-web (FSD)
 

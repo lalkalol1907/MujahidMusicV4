@@ -6,8 +6,7 @@ test-bot:
 	./gradlew test --no-daemon
 
 test-admin-api:
-	pip install -e "./admin-api[dev]"
-	pytest admin-api/tests -q
+	cd admin-api && bun install --frozen-lockfile && bun test
 
 test-admin-web:
 	cd admin-web && npm ci && npm run build
@@ -16,5 +15,5 @@ dev-compose:
 	docker compose up -d --build
 
 lint:
-	cd admin-api && ruff check src tests
+	cd admin-api && bun run lint
 	cd admin-web && npm run lint

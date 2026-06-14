@@ -33,15 +33,13 @@ jobs:
       - name: Run Bot Unit Tests
         run: ./gradlew test --no-daemon
 
-      - name: Set Up Python
-        uses: actions/setup-python@v5
+      - name: Set Up Bun
+        uses: oven-sh/setup-bun@v2
         with:
-          python-version: '3.14'
+          bun-version: "1.2"
 
       - name: Run Admin API Tests
-        run: |
-          pip install -e "./admin-api[dev]"
-          pytest admin-api/tests -q
+        run: cd admin-api && bun install --frozen-lockfile && bun test
 
       - name: Set Up Node
         uses: actions/setup-node@v4
